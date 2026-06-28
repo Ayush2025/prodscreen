@@ -4,40 +4,29 @@ import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { env } from "../config/env.js";
 
-const toAuthPayload = (user) => {
-  const token = jwt.sign({ sub: user._id, role: user.role }, env.JWT_SECRET, {
-    expiresIn: env.JWT_EXPIRES_IN
+const setAuthCookie = (res, token) => {
+  res.cookie(env.JWT_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 1000 * 60 * 60 * 12
   });
-  return {
-    token,
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role
-    }
-  };
 };
 
-export const register = async (req, res) => {
-  const { name, email, password, role } = req.body;
-  const exists = await User.findOne({ email });
-  if (exists) {
-    throw new ApiError(StatusCodes.CONFLICT, "Email already exists");
-  }
+const createToken = (user) => {
+  return jwt.sign({ sub: user._id, role: user.role }, env.JWT_SECRET, {
+    expiresIn: env.JWT_EXPIRES_IN
+  });
+};
 
-  const usersCount = await User.countDocuments({});
-  if (usersCount > 0) {
-    throw new ApiError(
-      StatusCodes.FORBIDDEN,
-      "Public registration is disabled after bootstrap. Ask an admin to provision users."
-    );
-  }
-  const effectiveRole = usersCount === 0 ? "admin" : role || "operator";
-  const passwordHash = await User.hashPassword(password);
-
-  const user = await User.create({ name, email, passwordHash, role: effectiveRole });
-  return res.status(StatusCodes.CREATED).json(toAuthPayload(user));
+const toUserPayload = (user) => {
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    factoryIds: user.factoryIds || []
+  };
 };
 
 export const login = async (req, res) => {
@@ -52,11 +41,32 @@ export const login = async (req, res) => {
     throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid credentials");
   }
 
-  return res.status(StatusCodes.OK).json(toAuthPayload(user));
+  const token = createToken(user);
+  setAuthCookie(res, token);
+  return res.status(StatusCodes.OK).json({ user: toUserPayload(user) });
+};
+
+export const logout = async (_req, res) => {
+  res.clearCookie(env.JWT_COOKIE_NAME, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "lax"
+  });
+  return res.status(StatusCodes.OK).json({ message: "Logged out" });
 };
 
 export const me = async (req, res) => {
   return res.status(StatusCodes.OK).json({
-    user: req.user
+    user: toUserPayload(req.user)
   });
+};
+
+export const createSessionPayload = (user) => {
+  const token = jwt.sign({ sub: user._id, role: user.role }, env.JWT_SECRET, {
+    expiresIn: env.JWT_EXPIRES_IN
+  });
+  return {
+    token,
+    user: toUserPayload(user)
+  };
 };

@@ -9,33 +9,21 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const { data } = await api.post("/auth/login", { email, password });
-    localStorage.setItem("accessToken", data.token);
     setUser(data.user);
   };
 
-  const register = async (payload) => {
-    const { data } = await api.post("/auth/register", payload);
-    localStorage.setItem("accessToken", data.token);
-    setUser(data.user);
-  };
-
-  const logout = () => {
-    localStorage.removeItem("accessToken");
+  const logout = async () => {
+    await api.post("/auth/logout");
     setUser(null);
   };
 
   useEffect(() => {
     const bootstrap = async () => {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        setLoading(false);
-        return;
-      }
       try {
         const { data } = await api.get("/auth/me");
         setUser(data.user);
       } catch {
-        localStorage.removeItem("accessToken");
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -43,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     bootstrap();
   }, []);
 
-  const value = useMemo(() => ({ user, loading, login, logout, register }), [user, loading]);
+  const value = useMemo(() => ({ user, loading, login, logout }), [user, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

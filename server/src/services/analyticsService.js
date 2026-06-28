@@ -1,63 +1,57 @@
-import axios from "axios";
+import Groq from "groq-sdk";
 import { env } from "../config/env.js";
+import { ApiError } from "../utils/ApiError.js";
 
-const computeTrend = (records) => {
-  const normalized = records.map((record) => ({
-    date: record.date,
-    target: record.totals.target,
-    actual: record.totals.actual,
-    gap: record.totals.gap
-  }));
-  return normalized.sort((a, b) => a.date.localeCompare(b.date));
+const groqClient = env.GROQ_API_KEY ? new Groq({ apiKey: env.GROQ_API_KEY }) : null;
+
+const parseJson = (text) => {
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new ApiError(502, "Malformed Groq JSON response");
+  }
 };
 
-export const buildSummary = (records) => {
-  const totalTarget = records.reduce((acc, rec) => acc + rec.totals.target, 0);
-  const totalActual = records.reduce((acc, rec) => acc + rec.totals.actual, 0);
-  const totalGap = totalActual - totalTarget;
-  const attainmentPct = totalTarget === 0 ? 0 : Number(((totalActual / totalTarget) * 100).toFixed(2));
-
+export const buildSummaryMetrics = ({ totals, byProcess, trend, defectsByCategory }) => {
+  const totalTarget = totals?.target || 0;
+  const totalActual = totals?.actual || 0;
+  const totalGap = totals?.gap || 0;
   return {
     totalTarget,
     totalActual,
     totalGap,
-    attainmentPct,
-    trend: computeTrend(records)
+    attainmentPct: totalTarget > 0 ? Number(((totalActual / totalTarget) * 100).toFixed(2)) : 0,
+    byProcess,
+    trend,
+    defectsByCategory
   };
 };
 
-export const generateClaudeInsights = async (payload) => {
-  if (!env.CLAUDE_API_KEY) {
-    return {
-      provider: "claude",
-      status: "skipped",
-      insight: "Claude API key is not configured. Add CLAUDE_API_KEY to enable AI analysis."
-    };
+export const generateGroqInsights = async (summary) => {
+  if (!groqClient) {
+    throw new ApiError(400, "GROQ_API_KEY is not configured on server");
   }
 
-  const prompt = `Analyze the production KPI data and return concise operational insights:\n${JSON.stringify(payload)}`;
-
-  const response = await axios.post(
-    "https://api.anthropic.com/v1/messages",
-    {
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 600,
-      messages: [{ role: "user", content: prompt }]
-    },
-    {
-      headers: {
-        "x-api-key": env.CLAUDE_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json"
+  const completion = await groqClient.chat.completions.create({
+    model: "llama-3.1-8b-instant",
+    temperature: 0.1,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are an operations analyst. Return strict JSON only with shape: {\"insights\": string[], \"chartSuggestions\": string[]}. Use only provided numbers."
       },
-      timeout: 20000
-    }
-  );
+      {
+        role: "user",
+        content: `Analyze this production summary JSON and produce 3-5 concise factual insights:\n${JSON.stringify(summary)}`
+      }
+    ]
+  });
 
-  const output = response.data?.content?.[0]?.text ?? "No insight returned";
-  return {
-    provider: "claude",
-    status: "ok",
-    insight: output
-  };
+  const text = completion.choices?.[0]?.message?.content || "{}";
+  const parsed = parseJson(text);
+  if (!Array.isArray(parsed.insights)) {
+    throw new ApiError(502, "Groq response missing insights array");
+  }
+  return parsed;
 };

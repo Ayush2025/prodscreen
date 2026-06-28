@@ -1,13 +1,20 @@
 import { Router } from "express";
-import { getInsights, getSummary } from "../controllers/analyticsController.js";
+import { body } from "express-validator";
+import { queryAnalytics } from "../controllers/analyticsController.js";
 import { requireAuth } from "../middleware/auth.js";
-import { listRecordRules } from "../validators/productionValidators.js";
 import { validate } from "../middleware/validate.js";
 
 const router = Router();
 
 router.use(requireAuth);
-router.get("/summary", listRecordRules, validate, getSummary);
-router.get("/insights", listRecordRules, validate, getInsights);
+router.post(
+  "/query",
+  body("factoryId").isMongoId(),
+  body("dateRange.from").optional().isString(),
+  body("dateRange.to").optional().isString(),
+  body("processIds").optional().isArray(),
+  validate,
+  queryAnalytics
+);
 
 export default router;

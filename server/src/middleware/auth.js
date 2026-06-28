@@ -6,10 +6,9 @@ import { User } from "../models/User.js";
 
 export const requireAuth = async (req, res, next) => {
   try {
-    const header = req.headers.authorization || "";
-    const [scheme, token] = header.split(" ");
-    if (scheme !== "Bearer" || !token) {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, "Missing or invalid bearer token");
+    const token = req.cookies?.[env.JWT_COOKIE_NAME];
+    if (!token) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, "Missing authentication cookie");
     }
 
     const payload = jwt.verify(token, env.JWT_SECRET);

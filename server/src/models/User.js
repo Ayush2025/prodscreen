@@ -8,11 +8,12 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     role: {
       type: String,
-      enum: ["admin", "supervisor", "operator", "viewer"],
-      default: "operator"
-    }
+      enum: ["super_admin", "factory_admin", "supervisor", "operator"],
+      required: true
+    },
+    factoryIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Factory", default: [] }]
   },
-  { timestamps: true }
+  { timestamps: true, versionKey: false }
 );
 
 userSchema.methods.verifyPassword = function verifyPassword(password) {

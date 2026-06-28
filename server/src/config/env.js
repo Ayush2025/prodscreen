@@ -8,13 +8,10 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   MONGODB_URI: z.string().min(1, "MONGODB_URI is required"),
   JWT_SECRET: z.string().min(16, "JWT_SECRET must be at least 16 chars"),
+  JWT_EXPIRES_IN: z.string().default("12h"),
   GROQ_API_KEY: z.string().optional(),
   CLIENT_URL: z.string().default("http://localhost:5173"),
-
-  // Backward-compatibility values from prior iteration.
-  JWT_EXPIRES_IN: z.string().default("12h"),
-  KPI_PLUS_BASE_URL: z.string().url().optional(),
-  KPI_PLUS_API_KEY: z.string().optional()
+  JWT_COOKIE_NAME: z.string().default("ps_token")
 });
 
 const parsed = envSchema.safeParse(process.env);

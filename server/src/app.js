@@ -10,8 +10,12 @@ import pinoHttp from "pino-http";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import authRoutes from "./routes/authRoutes.js";
-import adminRoutes from "./routes/adminRoutes.js";
-import productionRoutes from "./routes/productionRoutes.js";
+import templateRoutes from "./routes/templateRoutes.js";
+import columnDefinitionRoutes from "./routes/columnDefinitionRoutes.js";
+import factoryRoutes from "./routes/factoryRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import entryRoutes from "./routes/entryRoutes.js";
+import defectRoutes from "./routes/defectRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import integrationRoutes from "./routes/integrationRoutes.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
@@ -21,7 +25,7 @@ export const app = express();
 app.use(
   cors({
     origin: env.CLIENT_URL,
-    credentials: false
+    credentials: true
   })
 );
 app.use(helmet());
@@ -58,10 +62,14 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/production", productionRoutes);
+app.use("/api/templates", templateRoutes);
+app.use("/api/column-definitions", columnDefinitionRoutes);
+app.use("/api/factories", factoryRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api", entryRoutes);
+app.use("/api", defectRoutes);
 app.use("/api/analytics", analyticsRoutes);
-app.use("/api/integrations", integrationRoutes);
+app.use("/api", integrationRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

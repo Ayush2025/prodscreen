@@ -1,16 +1,15 @@
 import mongoose from "mongoose";
 
-const columnSchema = new mongoose.Schema(
+const tableTemplateColumnSchema = new mongoose.Schema(
   {
+    columnDefId: { type: mongoose.Schema.Types.ObjectId, ref: "ColumnDefinition", required: true },
     key: { type: String, required: true },
     label: { type: String, required: true },
-    type: {
-      type: String,
-      enum: ["numeric", "text", "dropdown", "time-range"],
-      required: true
-    },
-    required: { type: Boolean, default: false },
-    options: { type: [String], default: [] }
+    dataType: { type: String, enum: ["number", "text", "dropdown", "computed"], required: true },
+    dropdownOptions: { type: [String], default: [] },
+    computeRule: { type: String, default: "" },
+    order: { type: Number, required: true },
+    width: { type: Number, default: 140 }
   },
   { _id: false }
 );
@@ -18,9 +17,13 @@ const columnSchema = new mongoose.Schema(
 const tableTemplateSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, unique: true },
-    columns: { type: [columnSchema], default: [] }
+    description: { type: String, default: "" },
+    columns: { type: [tableTemplateColumnSchema], default: [] },
+    includesHourByHour: { type: Boolean, default: true },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    isPublished: { type: Boolean, default: true }
   },
-  { timestamps: true }
+  { timestamps: true, versionKey: false }
 );
 
 export const TableTemplate = mongoose.model("TableTemplate", tableTemplateSchema);

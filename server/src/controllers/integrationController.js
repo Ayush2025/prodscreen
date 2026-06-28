@@ -7,10 +7,10 @@ export const ingestHardwareEvent = async (req, res) => {
 };
 
 export const listHardwareEvents = async (req, res) => {
-  const { processId, sourceType } = req.query;
+  const { factoryId, processed } = req.query;
   const filter = {};
-  if (processId) filter.processId = processId;
-  if (sourceType) filter.sourceType = sourceType;
+  if (factoryId) filter.factoryId = factoryId;
+  if (processed !== undefined) filter.processed = processed === "true";
   const events = await HardwareEvent.find(filter).sort({ createdAt: -1 }).limit(200);
   return res.status(StatusCodes.OK).json({ events });
 };

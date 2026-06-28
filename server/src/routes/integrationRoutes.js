@@ -9,16 +9,19 @@ const router = Router();
 router.use(requireAuth);
 router.post(
   "/hardware/events",
-  requireRole("admin", "supervisor", "operator"),
-  body("sourceType").isIn(["barcode", "rfid", "camera", "photoeye", "sensor"]),
-  body("eventType").isString(),
+  requireRole("super_admin", "factory_admin", "supervisor", "operator"),
+  body("factoryId").isMongoId(),
+  body("cellId").isString(),
+  body("deviceType").isIn(["barcode", "rfid", "camera", "photoeye", "sensor"]),
+  body("interpretedAs").isIn(["part_in", "part_out", "defect_flag", "unknown"]),
+  body("timestamp").isISO8601(),
   validate,
   ingestHardwareEvent
 );
 router.get(
   "/hardware/events",
-  query("processId").optional().isMongoId(),
-  query("sourceType").optional().isIn(["barcode", "rfid", "camera", "photoeye", "sensor"]),
+  query("factoryId").optional().isMongoId(),
+  query("processed").optional().isBoolean(),
   validate,
   listHardwareEvents
 );

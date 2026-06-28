@@ -1,19 +1,33 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Layout } from "./components/Layout";
+import { LoginPage } from "./pages/LoginPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { ProcessPage } from "./pages/ProcessPage";
+import { AdminFactoriesPage } from "./pages/AdminFactoriesPage";
+import { AdminTableGalleryPage } from "./pages/AdminTableGalleryPage";
+import { AdminShiftConfigPage } from "./pages/AdminShiftConfigPage";
+import { AdminUsersPage } from "./pages/AdminUsersPage";
 
 function App() {
-  const Placeholder = ({ route }) => <main>{route} — Not yet implemented</main>;
-
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="/login" element={<Placeholder route="/login" />} />
-      <Route path="/dashboard" element={<Placeholder route="/dashboard" />} />
-      <Route path="/process/:processId" element={<Placeholder route="/process/:processId" />} />
-      <Route path="/admin/factories" element={<Placeholder route="/admin/factories" />} />
-      <Route path="/admin/table-gallery" element={<Placeholder route="/admin/table-gallery" />} />
-      <Route path="/admin/shift-config" element={<Placeholder route="/admin/shift-config" />} />
-      <Route path="/admin/users" element={<Placeholder route="/admin/users" />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/process/:processId" element={<ProcessPage />} />
+            <Route path="/admin/factories" element={<AdminFactoriesPage />} />
+            <Route path="/admin/table-gallery" element={<AdminTableGalleryPage />} />
+            <Route path="/admin/shift-config" element={<AdminShiftConfigPage />} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
+          </Route>
+        </Route>
+      </Routes>
+    </AuthProvider>
   );
 }
 
