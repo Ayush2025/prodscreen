@@ -6,11 +6,13 @@ dotenv.config();
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
-  MONGO_URI: z.string().min(1, "MONGO_URI is required"),
+  MONGODB_URI: z.string().min(1, "MONGODB_URI is required"),
   JWT_SECRET: z.string().min(16, "JWT_SECRET must be at least 16 chars"),
+  GROQ_API_KEY: z.string().optional(),
+  CLIENT_URL: z.string().default("http://localhost:5173"),
+
+  // Backward-compatibility values from prior iteration.
   JWT_EXPIRES_IN: z.string().default("12h"),
-  CLIENT_ORIGIN: z.string().default("http://localhost:5173"),
-  CLAUDE_API_KEY: z.string().optional(),
   KPI_PLUS_BASE_URL: z.string().url().optional(),
   KPI_PLUS_API_KEY: z.string().optional()
 });

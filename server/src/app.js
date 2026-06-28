@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import helmet from "helmet";
 import cors from "cors";
 import morgan from "morgan";
@@ -19,7 +20,7 @@ export const app = express();
 
 app.use(
   cors({
-    origin: env.CLIENT_ORIGIN,
+    origin: env.CLIENT_URL,
     credentials: false
   })
 );
@@ -37,8 +38,23 @@ app.use(
   })
 );
 
-app.get("/health", (_req, res) => {
-  res.status(200).json({ status: "ok" });
+app.get("/api/health", (_req, res) => {
+  const stateMap = {
+    0: "disconnected",
+    1: "connected",
+    2: "connecting",
+    3: "disconnecting"
+  };
+  const readyState = mongoose.connection.readyState;
+  res.status(200).json({
+    status: readyState === 1 ? "ok" : "degraded",
+    mongoose: {
+      readyState,
+      state: stateMap[readyState] || "unknown",
+      host: mongoose.connection.host || null,
+      dbName: mongoose.connection.name || null
+    }
+  });
 });
 
 app.use("/api/auth", authRoutes);

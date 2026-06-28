@@ -1,27 +1,19 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import { Layout } from "./components/Layout";
-import { LoginPage } from "./pages/LoginPage";
-import { DashboardPage } from "./pages/DashboardPage";
-import { InputPage } from "./pages/InputPage";
-import { AdminPage } from "./pages/AdminPage";
 
 function App() {
+  const Placeholder = ({ route }) => <main>{route} — Not yet implemented</main>;
+
   return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route element={<ProtectedRoute />}>
-          <Route element={<Layout />}>
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/input" element={<InputPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-          </Route>
-        </Route>
-      </Routes>
-    </AuthProvider>
+    <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<Placeholder route="/login" />} />
+      <Route path="/dashboard" element={<Placeholder route="/dashboard" />} />
+      <Route path="/process/:processId" element={<Placeholder route="/process/:processId" />} />
+      <Route path="/admin/factories" element={<Placeholder route="/admin/factories" />} />
+      <Route path="/admin/table-gallery" element={<Placeholder route="/admin/table-gallery" />} />
+      <Route path="/admin/shift-config" element={<Placeholder route="/admin/shift-config" />} />
+      <Route path="/admin/users" element={<Placeholder route="/admin/users" />} />
+    </Routes>
   );
 }
 
