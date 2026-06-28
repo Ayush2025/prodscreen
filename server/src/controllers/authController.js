@@ -27,6 +27,12 @@ export const register = async (req, res) => {
   }
 
   const usersCount = await User.countDocuments({});
+  if (usersCount > 0) {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      "Public registration is disabled after bootstrap. Ask an admin to provision users."
+    );
+  }
   const effectiveRole = usersCount === 0 ? "admin" : role || "operator";
   const passwordHash = await User.hashPassword(password);
 
